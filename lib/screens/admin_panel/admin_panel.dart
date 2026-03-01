@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:taxi/config/app_colors.dart';
 import 'package:taxi/l10n/app_localizations.dart';
+import 'package:taxi/models/app_settings_model.dart';
 import 'package:taxi/models/driver_model.dart';
 import 'package:taxi/models/package_model.dart';
 import 'package:taxi/providers/auth_provider.dart';
@@ -77,10 +78,10 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
             color: Colors.white,
             child: Row(
               children: [
-                _buildTab(0, 'TAKSİ', Icons.taxi_alert),
-                _buildTab(1, 'İSTEK', Icons.request_page),
-                _buildTab(2, 'PAKET', Icons.card_giftcard),
-                _buildTab(3, 'AYAR', Icons.tune),
+                _buildTab(0, 'TAKSİLER', Icons.taxi_alert),
+                _buildTab(1, 'İSTEKLER', Icons.request_page),
+                _buildTab(2, 'PAKETLER', Icons.card_giftcard),
+                _buildTab(3, 'AYARLAR', Icons.tune),
               ],
             ),
           ),
@@ -164,9 +165,7 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
   Widget _buildAddDriverForm() {
     final plateCtrl = TextEditingController();
     final passCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
     final standCtrl = TextEditingController();
-    bool isPremium = false;
 
     return StatefulBuilder(
       builder: (context, setState) => Container(
@@ -180,154 +179,112 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Hızlı Ekle',
+              'Ekle',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: plateCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'PLAKA',
-                      filled: true,
-                      fillColor: const Color(0xFFF3F4F6),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      isDense: true,
-                    ),
-                    style: const TextStyle(fontSize: 12),
-                  ),
+            TextField(
+              controller: plateCtrl,
+              decoration: InputDecoration(
+                hintText: 'PLAKA',
+                filled: true,
+                fillColor: const Color(0xFFF3F4F6),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: passCtrl,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: 'ŞİFRE',
-                      filled: true,
-                      fillColor: const Color(0xFFF3F4F6),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      isDense: true,
-                    ),
-                    style: const TextStyle(fontSize: 12),
-                  ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
                 ),
-              ],
+                isDense: true,
+              ),
+              style: const TextStyle(fontSize: 12),
+              textCapitalization: TextCapitalization.characters,
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: phoneCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'TEL',
-                      filled: true,
-                      fillColor: const Color(0xFFF3F4F6),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      isDense: true,
-                    ),
-                    style: const TextStyle(fontSize: 12),
-                  ),
+            TextField(
+              controller: passCtrl,
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: 'ŞİFRE',
+                filled: true,
+                fillColor: const Color(0xFFF3F4F6),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: standCtrl,
-                    decoration: InputDecoration(
-                      hintText: 'DURAK',
-                      filled: true,
-                      fillColor: const Color(0xFFF3F4F6),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      isDense: true,
-                    ),
-                    style: const TextStyle(fontSize: 12),
-                  ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
                 ),
-              ],
+                isDense: true,
+              ),
+              style: const TextStyle(fontSize: 12),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Checkbox(
-                  value: isPremium,
-                  onChanged: (v) => setState(() => isPremium = v ?? false),
+            TextField(
+              controller: standCtrl,
+              decoration: InputDecoration(
+                hintText: 'DURAK',
+                filled: true,
+                fillColor: const Color(0xFFF3F4F6),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
                 ),
-                const Text('Premium Üye', style: TextStyle(fontSize: 12)),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: () {
-                    if (plateCtrl.text.isNotEmpty && passCtrl.text.isNotEmpty) {
-                      final newDriver = Driver(
-                        id: DateTime.now().toString(),
-                        plate: plateCtrl.text.toUpperCase(),
-                        lat: 37.8444,
-                        lng: 27.8458,
-                        status: 'available',
-                        taxiStand: standCtrl.text.isEmpty ? 'Merkez' : standCtrl.text,
-                        district: 'Efeler',
-                        phone: phoneCtrl.text.isEmpty ? '0555...' : phoneCtrl.text,
-                        isPremium: isPremium,
-                        password: passCtrl.text,
-                        likes: 0,
-                      );
-                      FirebaseService().addDriver(newDriver);
-                      plateCtrl.clear();
-                      passCtrl.clear();
-                      phoneCtrl.clear();
-                      standCtrl.clear();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Taksi eklendi')),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                  ),
-                  child: const Text(
-                    'KAYDET',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                isDense: true,
+              ),
+              style: const TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  if (plateCtrl.text.isNotEmpty && passCtrl.text.isNotEmpty) {
+                    final newDriver = Driver(
+                      id: DateTime.now().toString(),
+                      plate: plateCtrl.text.trim().toUpperCase(),
+                      lat: 37.8444,
+                      lng: 27.8458,
+                      status: 'available',
+                      taxiStand: standCtrl.text.trim().isEmpty ? 'Merkez' : standCtrl.text.trim(),
+                      district: 'Efeler',
+                      phone: '',
+                      isPremium: false,
+                      password: passCtrl.text.trim(),
+                      likes: 0,
+                    );
+                    FirebaseService().addDriver(newDriver);
+                    plateCtrl.clear();
+                    passCtrl.clear();
+                    standCtrl.clear();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Taksi eklendi'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text(
+                  'EKLE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
                   ),
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -408,119 +365,427 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
 
   // PACKAGES TAB
   Widget _buildPackagesTab(AsyncValue<List<TaxiPackage>> packages) {
-    return packages.when(
-      data: (packagesList) => ListView(
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildAddPackageForm(),
+        const SizedBox(height: 20),
+        const Text(
+          'Mevcut Paketler',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        const SizedBox(height: 12),
+        packages.when(
+          data: (packagesList) => Column(
+            children: packagesList.isEmpty
+                ? [const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text('Henüz paket yok', style: TextStyle(color: Colors.grey)),
+                  )]
+                : packagesList.map((pkg) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: pkg.isPremium ? AppColors.primary : Colors.grey[300]!,
+                          width: pkg.isPremium ? 2 : 1,
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${pkg.name} ${pkg.isPremium ? '⭐' : ''}',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                '${pkg.price} TL / ${pkg.duration}',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () => FirebaseService().deletePackage(pkg.id),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Icon(Icons.delete, size: 16, color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, st) => Center(child: Text('Hata: $e')),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddPackageForm() {
+    final nameCtrl = TextEditingController();
+    final priceCtrl = TextEditingController();
+    final durationCtrl = TextEditingController();
+
+    return StatefulBuilder(
+      builder: (context, setState) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
         padding: const EdgeInsets.all(16),
-        children: packagesList.map((pkg) {
-          return Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: pkg.isPremium ? AppColors.primary : Colors.grey[300]!,
-                width: pkg.isPremium ? 2 : 1,
-              ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Paket Ekle',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const SizedBox(height: 12),
+            Row(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${pkg.name} ${pkg.isPremium ? '⭐' : ''}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: nameCtrl,
+                    decoration: InputDecoration(
+                      hintText: 'Paket Adı',
+                      filled: true,
+                      fillColor: const Color(0xFFF3F4F6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                      isDense: true,
                     ),
-                    Text(
-                      '${pkg.price} TL / ${pkg.duration}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
-                GestureDetector(
-                  onTap: () => FirebaseService().deletePackage(pkg.id),
-                  child: const Icon(Icons.delete, color: Colors.red, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: priceCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'Fiyat (TL)',
+                      filled: true,
+                      fillColor: const Color(0xFFF3F4F6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                      isDense: true,
+                    ),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: durationCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      hintText: 'Süre (Ay)',
+                      filled: true,
+                      fillColor: const Color(0xFFF3F4F6),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                      isDense: true,
+                    ),
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
               ],
             ),
-          );
-        }).toList(),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  final name = nameCtrl.text.trim();
+                  final price = priceCtrl.text.trim();
+                  final duration = durationCtrl.text.trim();
+
+                  if (name.isEmpty || price.isEmpty || duration.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Tüm alanları doldurun'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final pkg = TaxiPackage(
+                    id: '',
+                    name: name,
+                    price: price,
+                    duration: '$duration Ay',
+                    isPremium: false,
+                  );
+                  FirebaseService().addPackage(pkg);
+                  nameCtrl.clear();
+                  priceCtrl.clear();
+                  durationCtrl.clear();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Paket eklendi'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: const Text(
+                  'EKLE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, st) => Center(child: Text('Hata: $e')),
     );
   }
 
   // SETTINGS TAB
   Widget _buildSettingsTab() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
+    final whatsappCtrl = TextEditingController();
+    final downloadCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
+    bool isLoading = true;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        // Mevcut ayarları yükle
+        if (isLoading) {
+          FirebaseService().getSettings().then((settings) {
+            whatsappCtrl.text = settings.whatsappNumber;
+            downloadCtrl.text = settings.downloadLink;
+            setState(() => isLoading = false);
+          }).catchError((_) {
+            setState(() => isLoading = false);
+          });
+        }
+
+        if (isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return ListView(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Ayarlar',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'Admin Şifresi',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'WhatsApp Numarası',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: 'İndirme Linki',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Ayarlar kaydedildi')),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                  ),
-                  child: const Text(
-                    'KAYDET',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          children: [
+            // WhatsApp Linki
+            _buildSettingsCard(
+              icon: Icons.chat,
+              title: 'WhatsApp Linki',
+              controller: whatsappCtrl,
+              hint: '905XXXXXXXXX',
+              keyboardType: TextInputType.phone,
+              onSave: () {
+                FirebaseService().getSettings().then((current) {
+                  FirebaseService().updateSettings(
+                    current.copyWith(whatsappNumber: whatsappCtrl.text.trim()),
+                  );
+                }).catchError((e) => debugPrint('WhatsApp kayıt hatası: $e'));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('WhatsApp linki güncellendi ✓'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+
+            // Uygulama İndirme Linki
+            _buildSettingsCard(
+              icon: Icons.download,
+              title: 'Uygulama İndirme Linki',
+              controller: downloadCtrl,
+              hint: 'https://...',
+              keyboardType: TextInputType.url,
+              onSave: () {
+                FirebaseService().getSettings().then((current) {
+                  FirebaseService().updateSettings(
+                    current.copyWith(downloadLink: downloadCtrl.text.trim()),
+                  );
+                }).catchError((e) => debugPrint('İndirme link kayıt hatası: $e'));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('İndirme linki güncellendi ✓'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: 12),
+
+            // Admin Şifresi
+            _buildSettingsCard(
+              icon: Icons.lock,
+              title: 'Admin Şifresi',
+              controller: passwordCtrl,
+              hint: 'Değiştirmek için yeni şifre yaz',
+              obscureText: true,
+              onSave: () {
+                if (passwordCtrl.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Şifre boş olamaz'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                  return;
+                }
+                final newPass = passwordCtrl.text.trim();
+                FirebaseService().getSettings().then((current) {
+                  FirebaseService().updateSettings(
+                    current.copyWith(adminPassword: newPass),
+                  );
+                }).catchError((e) => debugPrint('Admin şifre kayıt hatası: $e'));
+                passwordCtrl.clear();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Admin şifresi güncellendi ✓'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSettingsCard({
+    required IconData icon,
+    required String title,
+    required TextEditingController controller,
+    required String hint,
+    required VoidCallback onSave,
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+  }) {
+    bool isSaving = false;
+
+    return StatefulBuilder(
+      builder: (context, setState) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
-      ],
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 18, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              obscureText: obscureText,
+              keyboardType: keyboardType,
+              decoration: InputDecoration(
+                hintText: hint,
+                filled: true,
+                fillColor: const Color(0xFFF3F4F6),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 10),
+                isDense: true,
+              ),
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isSaving
+                    ? null
+                    : () {
+                        setState(() => isSaving = true);
+                        onSave();
+                        Future.delayed(const Duration(milliseconds: 400), () {
+                          if (context.mounted) {
+                            setState(() => isSaving = false);
+                          }
+                        });
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+                child: isSaving
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text(
+                        'KAYDET',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -48,35 +48,72 @@ class _OsmMapWidgetState extends ConsumerState<OsmMapWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: const ll.LatLng(
-          AppConstants.aydinLatitude,
-          AppConstants.aydinLongitude,
-        ),
-        initialZoom: AppConstants.initialZoom,
-        interactionOptions: const InteractionOptions(
-          flags: InteractiveFlag.all,
-        ),
-      ),
+    return Stack(
       children: [
-        // OSM Tile Layer
-        TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'com.aydindabutaksi.taxi',
-          maxZoom: 19,
-          // Hata callback — fallback tetikler
-          errorTileCallback: _onTileError,
+        FlutterMap(
+          mapController: _mapController,
+          options: MapOptions(
+            initialCenter: const ll.LatLng(
+              AppConstants.aydinLatitude,
+              AppConstants.aydinLongitude,
+            ),
+            initialZoom: AppConstants.initialZoom,
+            minZoom: 4,
+            maxZoom: 19,
+            interactionOptions: const InteractionOptions(
+              flags: InteractiveFlag.all,
+            ),
+          ),
+          children: [
+            // OSM Tile Layer
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.aydindabutaksi.taxi',
+              maxZoom: 19,
+              // Hata callback — fallback tetikler
+              errorTileCallback: _onTileError,
+            ),
+
+            // Sürücü Marker'ları
+            MarkerLayer(
+              markers: _buildMarkers(),
+            ),
+
+            // Atıf (OSM lisans gereği zorunlu)
+            _OsmAttribution(),
+          ],
         ),
 
-        // Sürücü Marker'ları
-        MarkerLayer(
-          markers: _buildMarkers(),
+        // ─── Zoom Butonları ──────────────────────────────────────────
+        Positioned(
+          right: 12,
+          bottom: 120,
+          child: Column(
+            children: [
+              _ZoomButton(
+                icon: Icons.add,
+                onTap: () {
+                  final zoom = _mapController.camera.zoom + 1;
+                  _mapController.move(
+                    _mapController.camera.center,
+                    zoom.clamp(4, 19),
+                  );
+                },
+              ),
+              const SizedBox(height: 4),
+              _ZoomButton(
+                icon: Icons.remove,
+                onTap: () {
+                  final zoom = _mapController.camera.zoom - 1;
+                  _mapController.move(
+                    _mapController.camera.center,
+                    zoom.clamp(4, 19),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
-
-        // Atıf (OSM lisans gereği zorunlu)
-        _OsmAttribution(),
       ],
     );
   }
@@ -128,6 +165,37 @@ class _OsmMapWidgetState extends ConsumerState<OsmMapWidget> {
       default:
         return Colors.grey.shade600;
     }
+  }
+}
+
+/// Zoom +/- butonu.
+class _ZoomButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ZoomButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.black87, size: 22),
+      ),
+    );
   }
 }
 

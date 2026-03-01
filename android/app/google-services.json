@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "169622305166",
-    "project_id": "taxi-project-cc4c5",
-    "storage_bucket": "taxi-project-cc4c5.firebasestorage.app"
+    "project_number": "697181183608",
+    "firebase_url": "https://aydindabutaksi-default-rtdb.firebaseio.com",
+    "project_id": "aydindabutaksi",
+    "storage_bucket": "aydindabutaksi.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:169622305166:android:9243c497391de247f34cdf",
+        "mobilesdk_app_id": "1:697181183608:android:9625ff7f23f085bf88578d",
         "android_client_info": {
           "package_name": "com.example.taxi"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB6SfT7cAs-ZsXBXh5Hq6HPxq0pDr5bsUw"
+          "current_key": "AIzaSyCy6qFEt5hGFd2cdBpSAnHkjZRxQxT16UA"
         }
       ],
       "services": {

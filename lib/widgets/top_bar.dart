@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:taxi/config/app_colors.dart';
+import 'package:taxi/models/driver_model.dart';
 import 'package:taxi/providers/auth_provider.dart';
+import 'package:taxi/services/firebase_service.dart';
 
 class TopBar extends ConsumerWidget {
   const TopBar({Key? key}) : super(key: key);
@@ -156,7 +158,7 @@ class TopBar extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => const DriverListModal(),
+      builder: (context) => DriverListModal(),
     );
   }
 }
@@ -205,17 +207,153 @@ class DriverListModal extends StatelessWidget {
               ),
               // List
               Expanded(
-                child: Center(
-                  child: Text(
-                    'Taksiler yükleniyor...',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
+                child: StreamBuilder<List<Driver>>(
+                  stream: FirebaseService().getDriversStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            'Yüklenirken hata oluştu:\n${snapshot.error}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ),
+                      );
+                    }
+
+                    final drivers = snapshot.data ?? [];
+                    // ADMIN plakalıyı ve pending durumundakileri filtrele
+                    final activeDrivers = drivers
+                        .where((d) =>
+                            d.plate.toUpperCase() != 'ADMIN' &&
+                            d.status != 'pending')
+                        .toList();
+
+                    if (activeDrivers.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.local_taxi,
+                                size: 48, color: Colors.grey[300]),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Henüz kayıtlı taksi yok',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      controller: scrollController,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: activeDrivers.length,
+                      itemBuilder: (context, index) {
+                        final driver = activeDrivers[index];
+                        return _buildDriverTile(driver);
+                      },
+                    );
+                  },
                 ),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildDriverTile(Driver driver) {
+    Color statusColor;
+    String statusText;
+    IconData statusIcon;
+
+    switch (driver.status) {
+      case 'available':
+        statusColor = AppColors.available;
+        statusText = 'Müsait';
+        statusIcon = Icons.check_circle;
+        break;
+      case 'busy':
+        statusColor = AppColors.busy;
+        statusText = 'Dolu';
+        statusIcon = Icons.navigation;
+        break;
+      case 'break':
+        statusColor = const Color(0xFF6B7280);
+        statusText = 'Molada';
+        statusIcon = Icons.coffee;
+        break;
+      default:
+        statusColor = Colors.grey;
+        statusText = driver.status;
+        statusIcon = Icons.help;
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(statusIcon, color: statusColor, size: 22),
+        ),
+        title: Text(
+          driver.plate,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: Text(
+          driver.taxiStand.isNotEmpty
+              ? '${driver.taxiStand}${driver.district.isNotEmpty ? ' • ${driver.district}' : ''}'
+              : driver.district.isNotEmpty
+                  ? driver.district
+                  : 'Konum bilgisi yok',
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: statusColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: statusColor.withOpacity(0.3)),
+          ),
+          child: Text(
+            statusText,
+            style: TextStyle(
+              color: statusColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

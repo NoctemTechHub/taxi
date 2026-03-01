@@ -50,19 +50,21 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyB6SfT7cAs-ZsXBXh5Hq6HPxq0pDr5bsUw',
-    appId: '1:169622305166:android:9243c497391de247f34cdf',
-    messagingSenderId: '169622305166',
-    projectId: 'taxi-project-cc4c5',
-    storageBucket: 'taxi-project-cc4c5.firebasestorage.app',
+    apiKey: 'AIzaSyCy6qFEt5hGFd2cdBpSAnHkjZRxQxT16UA',
+    appId: '1:697181183608:android:9625ff7f23f085bf88578d',
+    messagingSenderId: '697181183608',
+    projectId: 'aydindabutaksi',
+    databaseURL: 'https://aydindabutaksi-default-rtdb.firebaseio.com',
+    storageBucket: 'aydindabutaksi.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCn-IcW9MA8o7y-3GYbwupI4jeSDFB-hhI',
-    appId: '1:169622305166:ios:868b6ba2fc2b0bbcf34cdf',
-    messagingSenderId: '169622305166',
-    projectId: 'taxi-project-cc4c5',
-    storageBucket: 'taxi-project-cc4c5.firebasestorage.app',
+    apiKey: 'AIzaSyAWDCxtx1Mteeo7iC9Z8YwRk1dxZh-88QI',
+    appId: '1:697181183608:ios:6fe7165f656f7a8888578d',
+    messagingSenderId: '697181183608',
+    projectId: 'aydindabutaksi',
+    databaseURL: 'https://aydindabutaksi-default-rtdb.firebaseio.com',
+    storageBucket: 'aydindabutaksi.firebasestorage.app',
     iosBundleId: 'com.example.taxi',
   );
 

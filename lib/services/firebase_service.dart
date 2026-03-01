@@ -86,6 +86,13 @@ class FirebaseService {
         .update({'status': status});
   }
 
+  Future<void> updateDriverField(String driverId, String field, dynamic value) async {
+    await _firestore
+        .collection(AppConstants.driversCollection)
+        .doc(driverId)
+        .update({field: value});
+  }
+
   Future<void> deleteDriver(String driverId) async {
     await _firestore
         .collection(AppConstants.driversCollection)

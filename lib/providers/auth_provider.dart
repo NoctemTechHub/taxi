@@ -39,6 +39,12 @@ class UserNotifier extends StateNotifier<AppUser?> {
     state = null;
   }
 
+  void updateStatus(String status) {
+    if (state != null) {
+      state = state!.copyWith(status: status);
+    }
+  }
+
   bool get isLoggedIn => state != null;
   bool get isAdmin => state?.isAdmin ?? false;
   bool get isDriver => state?.isDriver ?? false;
