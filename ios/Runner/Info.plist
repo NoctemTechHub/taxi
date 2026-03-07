@@ -66,5 +66,19 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-</dict>
-</plist>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>whatsapp</string>
+		<string>vnd.whatsapp</string>
+		<string>tel</string>
+		<string>http</string>
+		<string>https</string>
+	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AydınDaBu Taxi uygulaması profil fotoğrafı seçmek için galeriye erişmek istemektedir.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>AydınDaBu Taxi uygulaması kamera erişmek istemektedir.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>AydınDaBu Taxi uygulaması konumunuza erişmek istediğini kullanan deneyimi iyileştirmek için ihtiyaç duymaktadır.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>AydınDaBu Taxi uygulaması her zaman konumunuza erişmek istediğini kullanan deneyimi iyileştirmek için ihtiyaç duymaktadır.</string>

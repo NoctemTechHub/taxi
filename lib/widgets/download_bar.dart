@@ -91,7 +91,7 @@ class DownloadBar extends ConsumerWidget {
         );
       }
     } catch (e) {
-      print('Error launching URL: $e');
+      debugPrint('Error launching URL: $e');
     }
   }
 }

@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:taxi/config/app_colors.dart';
 import 'package:taxi/providers/auth_provider.dart';
+import 'package:taxi/providers/settings_provider.dart';
 import 'package:taxi/services/firebase_service.dart';
+import 'package:taxi/services/location_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DriverPanel extends ConsumerStatefulWidget {
@@ -16,6 +20,59 @@ class DriverPanel extends ConsumerStatefulWidget {
 class _DriverPanelState extends ConsumerState<DriverPanel> {
   String _currentStatus = 'available';
   bool _statusInitialized = false;
+  StreamSubscription<Position>? _locationSub;
+  final LocationService _locationService = LocationService();
+  bool _trackingActive = false;
+
+  @override
+  void dispose() {
+    _stopLiveTracking();
+    super.dispose();
+  }
+
+  /// Canlı konum takibini başlat
+  Future<void> _startLiveTracking(String driverId) async {
+    if (_trackingActive) return;
+    final hasPermission = await _locationService.requestLocationPermission();
+    if (!hasPermission) {
+      debugPrint('[LiveTrack] Konum izni yok');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Konum izni verilmedi. Canlı takip başlatılamadı.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+    debugPrint('[LiveTrack] Başlatıldı: $driverId');
+    _trackingActive = true;
+
+    // İlk konumu hemen gönder
+    final pos = await _locationService.getCurrentLocation();
+    if (pos != null) {
+      FirebaseService().updateDriverLocation(driverId, pos.latitude, pos.longitude);
+    }
+
+    // Sonra sürekli dinle (10m hareket filtresi)
+    _locationSub = _locationService.getLocationStream().listen((position) {
+      FirebaseService().updateDriverLocation(
+        driverId,
+        position.latitude,
+        position.longitude,
+      );
+      debugPrint('[LiveTrack] Güncellendi: ${position.latitude}, ${position.longitude}');
+    });
+  }
+
+  /// Canlı konum takibini durdur
+  void _stopLiveTracking() {
+    _locationSub?.cancel();
+    _locationSub = null;
+    _trackingActive = false;
+    debugPrint('[LiveTrack] Durduruldu');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +99,10 @@ class _DriverPanelState extends ConsumerState<DriverPanel> {
     if (!_statusInitialized) {
       _currentStatus = user.status;
       _statusInitialized = true;
+      // Eğer mevcut durum busy ise, canlı takibi hemen başlat
+      if (_currentStatus == 'busy') {
+        _startLiveTracking(user.id);
+      }
     }
 
     return Scaffold(
@@ -72,6 +133,11 @@ class _DriverPanelState extends ConsumerState<DriverPanel> {
                   ),
                   GestureDetector(
                     onTap: () {
+                      // Çıkış yaparken canlı takibi durdur
+                      _stopLiveTracking();
+                      if (_currentStatus == 'busy') {
+                        FirebaseService().clearDriverLiveLocation(user.id);
+                      }
                       ref.read(userProvider.notifier).logout();
                       context.go('/map');
                     },
@@ -188,11 +254,14 @@ class _DriverPanelState extends ConsumerState<DriverPanel> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
+                          final settings = ref.read(settingsProvider).valueOrNull;
+                          final whatsappNum = settings?.whatsappNumber ?? '905413002836';
                           final whatsapp =
-                              'https://wa.me/905555555555?text=Merhaba%20paket%20yükseltmek%20istiyorum.%20Plaka:%20${user.plate}';
-                          if (await canLaunchUrl(Uri.parse(whatsapp))) {
-                            await launchUrl(Uri.parse(whatsapp));
-                          }
+                              'https://wa.me/$whatsappNum?text=Merhaba%20paket%20yükseltmek%20istiyorum.%20Plaka:%20${user.plate}';
+                          await launchUrl(
+                            Uri.parse(whatsapp),
+                            mode: LaunchMode.externalApplication,
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.success,
@@ -234,6 +303,14 @@ class _DriverPanelState extends ConsumerState<DriverPanel> {
     setState(() => _currentStatus = next);
     ref.read(userProvider.notifier).updateStatus(next);
     FirebaseService().updateDriverStatus(user.id, next);
+
+    // Canlı konum takibi: busy → başlat, diğer → durdur
+    if (next == 'busy') {
+      _startLiveTracking(user.id);
+    } else {
+      _stopLiveTracking();
+      FirebaseService().clearDriverLiveLocation(user.id);
+    }
   }
 
   Color _statusColor(String status) {
@@ -285,6 +362,14 @@ class _DriverPanelState extends ConsumerState<DriverPanel> {
           setState(() => _currentStatus = status);
           ref.read(userProvider.notifier).updateStatus(status);
           FirebaseService().updateDriverStatus(user.id, status);
+
+          // Canlı konum takibi: busy → başlat, diğer → durdur
+          if (status == 'busy') {
+            _startLiveTracking(user.id);
+          } else {
+            _stopLiveTracking();
+            FirebaseService().clearDriverLiveLocation(user.id);
+          }
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),

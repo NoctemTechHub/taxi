@@ -13,7 +13,7 @@ class AppConstants {
   static const String adminDefaultPassword = '123456';
   
   // WhatsApp
-  static const String defaultWhatsappNumber = '905555555555';
+  static const String defaultWhatsappNumber = '905413002836';
   
   // Default Download Link
   static const String defaultDownloadLink = 'https://aydindabutaksi.com/indir.apk';

@@ -119,34 +119,72 @@ class _OsmMapWidgetState extends ConsumerState<OsmMapWidget> {
   }
 
   List<Marker> _buildMarkers() {
+    debugPrint('[OsmMap] Marker oluşturuluyor: ${widget.drivers.length} sürücü');
     return widget.drivers.map((driver) {
-      final color = _colorForStatus(driver.status);
+      const color = Color(0xFFFFC107); // sarı
       return Marker(
         point: ll.LatLng(driver.lat, driver.lng),
-        width: 52,
-        height: 52,
+        width: 56,
+        height: 66,
         child: GestureDetector(
           onTap: () => widget.onDriverTap(driver),
           child: Tooltip(
             message: '${driver.plate} — ${driver.district}',
-            child: Container(
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.9),
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
+            child: Stack(
+              alignment: Alignment.center,
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  margin: const EdgeInsets.only(top: 10),
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: driver.isPremium ? const Color(0xFFFFD700) : Colors.white,
+                      width: driver.isPremium ? 3 : 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: driver.isPremium
+                            ? const Color(0xFFFFD700).withValues(alpha: 0.5)
+                            : Colors.black26,
+                        blurRadius: driver.isPremium ? 8 : 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: const Icon(
-                Icons.local_taxi,
-                color: Colors.white,
-                size: 26,
-              ),
+                  child: const Icon(
+                    Icons.local_taxi,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                if (driver.isPremium)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF8F00).withValues(alpha: 0.6),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.star,
+                        color: Color(0xFFFF8F00),
+                        size: 18,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -154,18 +192,7 @@ class _OsmMapWidgetState extends ConsumerState<OsmMapWidget> {
     }).toList();
   }
 
-  Color _colorForStatus(String status) {
-    switch (status) {
-      case 'available':
-        return Colors.green.shade600;
-      case 'busy':
-        return Colors.red.shade600;
-      case 'break':
-        return Colors.orange.shade600;
-      default:
-        return Colors.grey.shade600;
-    }
-  }
+
 }
 
 /// Zoom +/- butonu.

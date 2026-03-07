@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:taxi/models/user_model.dart';
 import 'package:taxi/services/auth_service.dart';
@@ -29,7 +30,7 @@ class UserNotifier extends StateNotifier<AppUser?> {
       }
       return false;
     } catch (e) {
-      print('Login error: $e');
+      debugPrint('Login error: $e');
       return false;
     }
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:taxi/config/app_colors.dart';
+import 'package:taxi/screens/kvkk_screen.dart';
 import 'package:taxi/services/firebase_service.dart';
 import 'package:taxi/services/notification_service.dart';
 
@@ -62,14 +63,28 @@ class SplashScreen extends HookWidget {
       final notificationService = NotificationService();
       await notificationService.initialize();
 
+      // KVKK onayı kontrol et
+      final kvkkAccepted = await KvkkScreen.isAccepted();
       
       if (context.mounted) {
-        context.go('/map');
+        if (kvkkAccepted) {
+          context.go('/map');
+        } else {
+          context.go('/kvkk');
+        }
       }
     } catch (e) {
-      print('Initialization error: $e');
+      debugPrint('Initialization error: $e');
       if (context.mounted) {
-        context.go('/map');
+        // KVKK onayı kontrol et (hata durumunda da)
+        final kvkkAccepted = await KvkkScreen.isAccepted();
+        if (context.mounted) {
+          if (kvkkAccepted) {
+            context.go('/map');
+          } else {
+            context.go('/kvkk');
+          }
+        }
       }
     }
   }

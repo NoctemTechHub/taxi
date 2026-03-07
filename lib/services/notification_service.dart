@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService {
@@ -25,11 +26,11 @@ class NotificationService {
 
     
     String? token = await _messaging.getToken();
-    print('FCM Token: $token');
+    debugPrint('FCM Token: $token');
 
     
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Foreground message: ${message.notification?.title}');
+      debugPrint('Foreground message: ${message.notification?.title}');
       
     });
 
@@ -38,13 +39,13 @@ class NotificationService {
 
     
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('Notification clicked: ${message.notification?.title}');
+      debugPrint('Notification clicked: ${message.notification?.title}');
       
     });
   }
 
   static Future<void> _firebaseMessagingBackgroundHandler(
       RemoteMessage message) async {
-    print('Background message received: ${message.notification?.title}');
+    debugPrint('Background message received: ${message.notification?.title}');
   }
 }

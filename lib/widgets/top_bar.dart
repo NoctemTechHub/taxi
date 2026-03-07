@@ -3,11 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:taxi/config/app_colors.dart';
 import 'package:taxi/models/driver_model.dart';
-import 'package:taxi/providers/auth_provider.dart';
-import 'package:taxi/services/firebase_service.dart';
+import 'package:taxi/providers/driver_provider.dart';
 
 class TopBar extends ConsumerWidget {
-  const TopBar({Key? key}) : super(key: key);
+  final bool showButtons;
+  const TopBar({Key? key, this.showButtons = true}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -71,6 +71,7 @@ class TopBar extends ConsumerWidget {
               ),
             ),
             // Action Buttons
+            if (showButtons)
             Row(
               children: [
                 GestureDetector(
@@ -164,11 +165,13 @@ class TopBar extends ConsumerWidget {
 }
 
 // Driver List Modal
-class DriverListModal extends StatelessWidget {
+class DriverListModal extends ConsumerWidget {
   const DriverListModal({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final driversAsync = ref.watch(driverListProvider);
+
     return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.6,
@@ -207,31 +210,23 @@ class DriverListModal extends StatelessWidget {
               ),
               // List
               Expanded(
-                child: StreamBuilder<List<Driver>>(
-                  stream: FirebaseService().getDriversStream(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Text(
-                            'Yüklenirken hata oluştu:\n${snapshot.error}',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey[600]),
-                          ),
-                        ),
-                      );
-                    }
-
-                    final drivers = snapshot.data ?? [];
+                child: driversAsync.when(
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  error: (error, _) => Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Text(
+                        'Yüklenirken hata oluştu:\n$error',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ),
+                  ),
+                  data: (drivers) {
                     // ADMIN plakalıyı ve pending durumundakileri filtrele
                     final activeDrivers = drivers
                         .where((d) =>
@@ -322,12 +317,21 @@ class DriverListModal extends StatelessWidget {
           ),
           child: Icon(statusIcon, color: statusColor, size: 22),
         ),
-        title: Text(
-          driver.plate,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
-          ),
+        title: Row(
+          children: [
+            Text(
+              driver.plate,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+              ),
+            ),
+            if (driver.isPremium)
+              const Padding(
+                padding: EdgeInsets.only(left: 6),
+                child: Text('⭐', style: TextStyle(fontSize: 14)),
+              ),
+          ],
         ),
         subtitle: Text(
           driver.taxiStand.isNotEmpty

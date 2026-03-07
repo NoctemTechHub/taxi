@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:taxi/screens/kvkk_screen.dart';
 import 'package:taxi/screens/login_screen.dart';
 import 'package:taxi/screens/map_screen.dart';
 import 'package:taxi/screens/splash_screen.dart';
@@ -12,6 +13,11 @@ final goRouterProvider = GoRouter(
       path: '/',
       name: 'splash',
       builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/kvkk',
+      name: 'kvkk',
+      builder: (context, state) => const KvkkScreen(),
     ),
     GoRoute(
       path: '/login',

@@ -1,3 +1,5 @@
+import 'package:taxi/utils/district_coordinates.dart';
+
 class Driver {
   final String id;
   final String plate;
@@ -8,6 +10,7 @@ class Driver {
   final String district;
   final String phone;
   final bool isPremium;
+  final bool isVip;
   final String password;
   final int likes;
   final DateTime? createdAt;
@@ -22,6 +25,7 @@ class Driver {
     required this.district,
     required this.phone,
     required this.isPremium,
+    this.isVip = false,
     required this.password,
     required this.likes,
     this.createdAt,
@@ -29,16 +33,49 @@ class Driver {
 
   
   factory Driver.fromJson(Map<String, dynamic> json, String docId) {
+    final district = json['district'] ?? '';
+    final rawLat = (json['lat'] as num?)?.toDouble();
+    final rawLng = (json['lng'] as num?)?.toDouble();
+    final plate = json['plate'] ?? '';
+    final isLiveLocation = json['isLiveLocation'] == true;
+
+    double lat;
+    double lng;
+
+    // Canlı konum takibi açık ve gerçek GPS koordinatı varsa,
+    // doğrudan Firebase'deki koordinatı kullan (sürücü hareket halinde).
+    if (isLiveLocation && rawLat != null && rawLng != null) {
+      lat = rawLat;
+      lng = rawLng;
+    } else {
+      // İlçe merkezini kullan + plakaya göre küçük offset
+      final districtCoords = DistrictCoordinates.getCoordinates(district);
+      if (districtCoords != null) {
+        final hash = plate.hashCode;
+        final offsetLat = ((hash % 100) - 50) * 0.0001;
+        final offsetLng = (((hash ~/ 100) % 100) - 50) * 0.0001;
+        lat = districtCoords.lat + offsetLat;
+        lng = districtCoords.lng + offsetLng;
+      } else if (rawLat != null && rawLng != null) {
+        lat = rawLat;
+        lng = rawLng;
+      } else {
+        lat = 37.8444;
+        lng = 27.8458;
+      }
+    }
+
     return Driver(
       id: docId,
-      plate: json['plate'] ?? '',
-      lat: (json['lat'] ?? 37.8444).toDouble(),
-      lng: (json['lng'] ?? 27.8458).toDouble(),
+      plate: plate,
+      lat: lat,
+      lng: lng,
       status: json['status'] ?? 'available',
       taxiStand: json['taxiStand'] ?? '',
-      district: json['district'] ?? '',
+      district: district,
       phone: json['phone'] ?? '',
       isPremium: json['isPremium'] ?? false,
+      isVip: json['isVip'] ?? false,
       password: json['password'] ?? '',
       likes: json['likes'] ?? 0,
       createdAt: json['createdAt'] != null 
@@ -58,6 +95,7 @@ class Driver {
       'district': district,
       'phone': phone,
       'isPremium': isPremium,
+      'isVip': isVip,
       'password': password,
       'likes': likes,
       'createdAt': createdAt?.millisecondsSinceEpoch,
@@ -75,6 +113,7 @@ class Driver {
     String? district,
     String? phone,
     bool? isPremium,
+    bool? isVip,
     String? password,
     int? likes,
     DateTime? createdAt,
@@ -89,6 +128,7 @@ class Driver {
       district: district ?? this.district,
       phone: phone ?? this.phone,
       isPremium: isPremium ?? this.isPremium,
+      isVip: isVip ?? this.isVip,
       password: password ?? this.password,
       likes: likes ?? this.likes,
       createdAt: createdAt ?? this.createdAt,

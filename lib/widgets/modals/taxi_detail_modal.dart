@@ -5,6 +5,7 @@ import 'package:taxi/config/app_colors.dart';
 import 'package:taxi/l10n/app_localizations.dart';
 import 'package:taxi/models/driver_model.dart';
 import 'package:taxi/providers/settings_provider.dart';
+import 'package:taxi/services/whatsapp_service.dart';
 
 class TaxiDetailModal extends ConsumerWidget {
   final Driver driver;
@@ -65,54 +66,16 @@ class TaxiDetailModal extends ConsumerWidget {
                     driver.plate,
                     Icons.directions_car,
                   ),
+                  _buildPhoneRow(driver.phone),
                   _buildInfoRow(
-                    'Telefon',
-                    driver.phone,
-                    Icons.phone,
-                  ),
-                  _buildInfoRow(
-                    'Stand',
+                    'Taksi Durağı',
                     driver.taxiStand,
-                    Icons.location_on,
+                    Icons.local_taxi,
                   ),
                   _buildInfoRow(
                     'İlçe',
                     driver.district,
                     Icons.map,
-                  ),
-                  _buildInfoRow(
-                    'Beğeni',
-                    '${driver.likes}',
-                    Icons.favorite,
-                  ),
-                  if (driver.isPremium)
-                    _buildInfoRow(
-                      'Paket',
-                      'Premium',
-                      Icons.star,
-                      color: AppColors.premium,
-                    ),
-                  
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(driver.status).withOpacity(0.1),
-                      border: Border.all(
-                        color: _getStatusColor(driver.status),
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'Durum: ${_getStatusText(driver.status)}',
-                      style: TextStyle(
-                        color: _getStatusColor(driver.status),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                   ),
                   const SizedBox(height: 24),
                   
@@ -134,6 +97,7 @@ class TaxiDetailModal extends ConsumerWidget {
                         child: settings.when(
                           data: (settingsData) => ElevatedButton.icon(
                             onPressed: () => _openWhatsApp(
+                              context,
                               settingsData.whatsappNumber,
                               driver.plate,
                             ),
@@ -163,6 +127,51 @@ class TaxiDetailModal extends ConsumerWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhoneRow(String phone) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: GestureDetector(
+        onTap: () => _callDriver(phone),
+        child: Row(
+          children: [
+            const Icon(Icons.phone, color: AppColors.info, size: 20),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Telefon',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.darkGray,
+                  ),
+                ),
+                Text(
+                  phone,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.info,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.info.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.call, color: AppColors.info, size: 20),
+            ),
+          ],
         ),
       ),
     );
@@ -234,29 +243,17 @@ class TaxiDetailModal extends ConsumerWidget {
   Future<void> _callDriver(String phone) async {
     try {
       final uri = Uri(scheme: 'tel', path: phone);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
-      }
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
-      print('Error calling: $e');
+      debugPrint('Error calling: $e');
     }
   }
 
-  Future<void> _openWhatsApp(String whatsappNumber, String plate) async {
-    try {
-      final message =
-          'Merhaba, $plate plakalı taksiye ihtiyacım var.';
-      final uri = Uri(
-        scheme: 'https',
-        host: 'wa.me',
-        path: '/$whatsappNumber',
-        queryParameters: {'text': message},
-      );
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      print('Error opening WhatsApp: $e');
-    }
+  Future<void> _openWhatsApp(BuildContext context, String whatsappNumber, String plate) async {
+    await WhatsAppService.sendTaxiMessage(
+      whatsappNumber: whatsappNumber,
+      taxiPlate: plate,
+      context: context,
+    );
   }
 }

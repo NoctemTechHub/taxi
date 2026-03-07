@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:taxi/config/app_colors.dart';
-import 'package:taxi/l10n/app_localizations.dart';
-import 'package:taxi/models/app_settings_model.dart';
+
 import 'package:taxi/models/driver_model.dart';
 import 'package:taxi/models/package_model.dart';
 import 'package:taxi/providers/auth_provider.dart';
 import 'package:taxi/providers/driver_provider.dart';
 import 'package:taxi/providers/package_provider.dart';
 import 'package:taxi/services/firebase_service.dart';
+import 'package:taxi/utils/district_coordinates.dart';
 
 class AdminPanel extends ConsumerStatefulWidget {
   const AdminPanel({Key? key}) : super(key: key);
@@ -20,6 +20,51 @@ class AdminPanel extends ConsumerStatefulWidget {
 
 class _AdminPanelState extends ConsumerState<AdminPanel> {
   int _selectedTab = 0;
+
+  // Settings tab controllers
+  final _whatsappCtrl = TextEditingController();
+  final _downloadCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  bool _settingsLoaded = false;
+
+  // Edit driver state
+  Driver? _editingDriver;
+  final _editPlateCtrl = TextEditingController();
+  final _editPassCtrl = TextEditingController();
+  final _editStandCtrl = TextEditingController();
+  String _editDistrict = 'Efeler';
+  bool _editIsPremium = false;
+
+  // Package form state
+  bool _pkgIsPremium = false;
+
+  // Add driver form state
+  bool _addIsPremium = false;
+
+  /// Firebase'den gelen ilçe adını dropdown listesindeki doğru eşleşmeye çevir.
+  String _findMatchingDistrict(String district) {
+    if (district.isEmpty) return 'Efeler';
+    final names = DistrictCoordinates.sortedDistrictNames;
+    // Birebir eşleşme
+    if (names.contains(district)) return district;
+    // Case-insensitive eşleşme
+    final lower = district.toLowerCase().trim();
+    for (final name in names) {
+      if (name.toLowerCase() == lower) return name;
+    }
+    return 'Efeler';
+  }
+
+  @override
+  void dispose() {
+    _whatsappCtrl.dispose();
+    _downloadCtrl.dispose();
+    _passwordCtrl.dispose();
+    _editPlateCtrl.dispose();
+    _editPassCtrl.dispose();
+    _editStandCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +100,7 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
             const Icon(Icons.settings, color: Colors.white),
             const SizedBox(width: 8),
             const Text(
-              'ADMİN PANELİ',
+              'ADMİN',
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ],
@@ -147,8 +192,13 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
       data: (driversList) => ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _buildAddDriverForm(),
-          const SizedBox(height: 20),
+          if (_editingDriver != null) ...[
+            _buildEditDriverForm(),
+            const SizedBox(height: 20),
+          ] else ...[  
+            _buildAddDriverForm(),
+            const SizedBox(height: 20),
+          ],
           Text(
             'Kayıtlı Taksiler (${driversList.length})',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -166,6 +216,7 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
     final plateCtrl = TextEditingController();
     final passCtrl = TextEditingController();
     final standCtrl = TextEditingController();
+    String selectedDistrict = 'Efeler';
 
     return StatefulBuilder(
       builder: (context, setState) => Container(
@@ -241,22 +292,51 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
               ),
               style: const TextStyle(fontSize: 12),
             ),
+            const SizedBox(height: 8),
+            // İlçe seçici dropdown
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  isExpanded: true,
+                  value: selectedDistrict,
+                  hint: const Text('İLÇE SEÇ', style: TextStyle(fontSize: 12)),
+                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                  items: DistrictCoordinates.sortedDistrictNames
+                      .map((name) => DropdownMenuItem(
+                            value: name,
+                            child: Text(name, style: const TextStyle(fontSize: 12)),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => selectedDistrict = value);
+                    }
+                  },
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
                   if (plateCtrl.text.isNotEmpty && passCtrl.text.isNotEmpty) {
+                    final coords = DistrictCoordinates.getCoordinatesOrDefault(selectedDistrict);
                     final newDriver = Driver(
                       id: DateTime.now().toString(),
                       plate: plateCtrl.text.trim().toUpperCase(),
-                      lat: 37.8444,
-                      lng: 27.8458,
+                      lat: coords.lat,
+                      lng: coords.lng,
                       status: 'available',
                       taxiStand: standCtrl.text.trim().isEmpty ? 'Merkez' : standCtrl.text.trim(),
-                      district: 'Efeler',
+                      district: selectedDistrict,
                       phone: '',
-                      isPremium: false,
+                      isPremium: _addIsPremium,
                       password: passCtrl.text.trim(),
                       likes: 0,
                     );
@@ -293,6 +373,7 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
   }
 
   Widget _buildDriverCard(Driver driver) {
+    final isSuspended = driver.status == 'suspended';
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -306,7 +387,7 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
         ],
       ),
       margin: const EdgeInsets.symmetric(vertical: 6),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
           Expanded(
@@ -322,31 +403,257 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                         fontSize: 14,
                       ),
                     ),
-                    if (driver.isPremium)
-                      const Padding(
-                        padding: EdgeInsets.only(left: 8),
-                        child: Text('⭐'),
+                    if (driver.isPremium || driver.isVip)
+                      Container(
+                        margin: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.premium.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'PRO',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.premium,
+                          ),
+                        ),
                       ),
                   ],
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  '${driver.taxiStand} - ${driver.status}',
+                  driver.taxiStand,
                   style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
               ],
             ),
           ),
+          // BAŞLAT / DURDUR butonu
+          GestureDetector(
+            onTap: () {
+              final newStatus = isSuspended ? 'available' : 'suspended';
+              FirebaseService().updateDriverStatus(driver.id, newStatus);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSuspended
+                    ? AppColors.success.withOpacity(0.1)
+                    : Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                isSuspended ? 'BAŞLAT' : 'DURDUR',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: isSuspended ? AppColors.success : Colors.red,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Düzenle butonu
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _editingDriver = driver;
+                _editPlateCtrl.text = driver.plate;
+                _editPassCtrl.text = driver.password;
+                _editStandCtrl.text = driver.taxiStand;
+                _editDistrict = _findMatchingDistrict(driver.district);
+                _editIsPremium = driver.isPremium || driver.isVip;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.edit, size: 16, color: Colors.grey),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditDriverForm() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'DÜZENLE',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _editPlateCtrl,
+            decoration: InputDecoration(
+              hintText: 'PLAKA',
+              filled: true,
+              fillColor: const Color(0xFFF3F4F6),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            ),
+            style: const TextStyle(fontSize: 14),
+            textCapitalization: TextCapitalization.characters,
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _editPassCtrl,
+            decoration: InputDecoration(
+              hintText: 'ŞİFRE',
+              filled: true,
+              fillColor: const Color(0xFFF3F4F6),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            ),
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _editStandCtrl,
+            decoration: InputDecoration(
+              hintText: 'DURAK',
+              filled: true,
+              fillColor: const Color(0xFFF3F4F6),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            ),
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(height: 8),
+          // İlçe dropdown
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                value: _editDistrict,
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                items: DistrictCoordinates.sortedDistrictNames
+                    .map((name) => DropdownMenuItem(
+                          value: name,
+                          child: Text(name),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _editDistrict = value);
+                  }
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Premium Üye checkbox
+          GestureDetector(
+            onTap: () => setState(() => _editIsPremium = !_editIsPremium),
+            child: Row(
+              children: [
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: _editIsPremium ? AppColors.primary : Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: _editIsPremium ? AppColors.primary : Colors.grey,
+                      width: 2,
+                    ),
+                  ),
+                  child: _editIsPremium
+                      ? const Icon(Icons.check, size: 16, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Premium Üye',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Güncelle ve İptal butonları
           Row(
             children: [
-              GestureDetector(
-                onTap: () => FirebaseService().deleteDriver(driver.id),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_editingDriver == null) return;
+                    final coords = DistrictCoordinates.getCoordinatesOrDefault(_editDistrict);
+                    final updated = _editingDriver!.copyWith(
+                      plate: _editPlateCtrl.text.trim().toUpperCase(),
+                      password: _editPassCtrl.text.trim(),
+                      taxiStand: _editStandCtrl.text.trim(),
+                      district: _editDistrict,
+                      lat: coords.lat,
+                      lng: coords.lng,
+                      isPremium: _editIsPremium,
+                      isVip: _editIsPremium,
+                    );
+                    FirebaseService().updateDriver(_editingDriver!.id, updated);
+                    setState(() => _editingDriver = null);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Taksi güncellendi ✓'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.secondary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Icon(Icons.delete, size: 16, color: Colors.red),
+                  child: const Text(
+                    'GÜNCELLE',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () => setState(() => _editingDriver = null),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                ),
+                child: const Text(
+                  'İPTAL',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],
@@ -520,6 +827,31 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
               ],
             ),
             const SizedBox(height: 12),
+            // Premium Üye checkbox
+            GestureDetector(
+              onTap: () => setState(() => _pkgIsPremium = !_pkgIsPremium),
+              child: Row(
+                children: [
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: _pkgIsPremium ? AppColors.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: _pkgIsPremium ? AppColors.primary : Colors.grey,
+                      ),
+                    ),
+                    child: _pkgIsPremium
+                        ? const Icon(Icons.check, size: 16, color: Colors.white)
+                        : null,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Premium Üye', style: TextStyle(fontSize: 13)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -543,7 +875,7 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                     name: name,
                     price: price,
                     duration: '$duration Ay',
-                    isPremium: false,
+                    isPremium: _pkgIsPremium,
                   );
                   FirebaseService().addPackage(pkg);
                   nameCtrl.clear();
@@ -560,9 +892,9 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                   backgroundColor: AppColors.secondary,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                child: const Text(
-                  'EKLE',
-                  style: TextStyle(
+                child: Text(
+                  _pkgIsPremium ? 'PREMIUM OLARAK EKLE' : 'PAKET EKLE',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
@@ -578,44 +910,33 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
 
   // SETTINGS TAB
   Widget _buildSettingsTab() {
-    final whatsappCtrl = TextEditingController();
-    final downloadCtrl = TextEditingController();
-    final passwordCtrl = TextEditingController();
-    bool isLoading = true;
+    if (!_settingsLoaded) {
+      _settingsLoaded = true;
+      FirebaseService().getSettings().then((settings) {
+        _whatsappCtrl.text = settings.whatsappNumber;
+        _downloadCtrl.text = settings.downloadLink;
+        if (mounted) setState(() {});
+      }).catchError((_) {
+        if (mounted) setState(() {});
+      });
+    }
 
-    return StatefulBuilder(
-      builder: (context, setState) {
-        // Mevcut ayarları yükle
-        if (isLoading) {
-          FirebaseService().getSettings().then((settings) {
-            whatsappCtrl.text = settings.whatsappNumber;
-            downloadCtrl.text = settings.downloadLink;
-            setState(() => isLoading = false);
-          }).catchError((_) {
-            setState(() => isLoading = false);
-          });
-        }
-
-        if (isLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        return ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // WhatsApp Linki
-            _buildSettingsCard(
-              icon: Icons.chat,
-              title: 'WhatsApp Linki',
-              controller: whatsappCtrl,
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // WhatsApp Linki
+        _buildSettingsCard(
+          icon: Icons.chat,
+          title: 'WhatsApp Linki',
+          controller: _whatsappCtrl,
               hint: '905XXXXXXXXX',
               keyboardType: TextInputType.phone,
               onSave: () {
                 FirebaseService().getSettings().then((current) {
                   FirebaseService().updateSettings(
-                    current.copyWith(whatsappNumber: whatsappCtrl.text.trim()),
+                    current.copyWith(whatsappNumber: _whatsappCtrl.text.trim()),
                   );
-                }).catchError((e) => debugPrint('WhatsApp kayıt hatası: $e'));
+                }).catchError((e) { debugPrint('WhatsApp kayıt hatası: $e'); });
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -632,15 +953,15 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
             _buildSettingsCard(
               icon: Icons.download,
               title: 'Uygulama İndirme Linki',
-              controller: downloadCtrl,
+              controller: _downloadCtrl,
               hint: 'https://...',
               keyboardType: TextInputType.url,
               onSave: () {
                 FirebaseService().getSettings().then((current) {
                   FirebaseService().updateSettings(
-                    current.copyWith(downloadLink: downloadCtrl.text.trim()),
+                    current.copyWith(downloadLink: _downloadCtrl.text.trim()),
                   );
-                }).catchError((e) => debugPrint('İndirme link kayıt hatası: $e'));
+                }).catchError((e) { debugPrint('İndirme link kayıt hatası: $e'); });
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -657,11 +978,11 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
             _buildSettingsCard(
               icon: Icons.lock,
               title: 'Admin Şifresi',
-              controller: passwordCtrl,
+              controller: _passwordCtrl,
               hint: 'Değiştirmek için yeni şifre yaz',
               obscureText: true,
               onSave: () {
-                if (passwordCtrl.text.trim().isEmpty) {
+                if (_passwordCtrl.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Şifre boş olamaz'),
@@ -670,13 +991,13 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                   );
                   return;
                 }
-                final newPass = passwordCtrl.text.trim();
+                final newPass = _passwordCtrl.text.trim();
                 FirebaseService().getSettings().then((current) {
                   FirebaseService().updateSettings(
                     current.copyWith(adminPassword: newPass),
                   );
-                }).catchError((e) => debugPrint('Admin şifre kayıt hatası: $e'));
-                passwordCtrl.clear();
+                }).catchError((e) { debugPrint('Admin şifre kayıt hatası: $e'); });
+                _passwordCtrl.clear();
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -689,8 +1010,6 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
             ),
           ],
         );
-      },
-    );
   }
 
   Widget _buildSettingsCard({

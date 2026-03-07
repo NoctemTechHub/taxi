@@ -34,7 +34,7 @@ final availableDriversProvider =
   return drivers.whenData(
     (data) => data
         .where((driver) =>
-            driver.status == 'available' && driver.status != 'suspended')
+            driver.status == 'available')
         .toList(),
   ).value ?? [];
 });

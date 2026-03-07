@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:taxi/config/app_colors.dart';
 import 'package:taxi/config/app_constants.dart';
 import 'package:taxi/providers/driver_provider.dart';
 import 'package:taxi/providers/map_provider.dart';
+import 'package:taxi/providers/settings_provider.dart';
 import 'package:taxi/widgets/modals/taxi_detail_modal.dart';
 import 'package:taxi/widgets/osm_map_widget.dart';
 import 'package:taxi/widgets/top_bar.dart';
@@ -26,12 +28,15 @@ class MapScreen extends ConsumerWidget {
         children: [
           drivers.when(
             data: (driversList) {
+              // ADMIN hariç tüm sürücüleri haritada göster
               final visibleDrivers = driversList
-                  .where((d) => d.status != 'suspended')
+                  .where((d) => d.plate.toUpperCase() != 'ADMIN')
                   .toList();
 
-              // ─── OSM (Birincil) ───────────────────────────────────────────
-              if (activeMapType == MapType.osm) {
+              debugPrint('[MapScreen] Toplam: ${driversList.length}, Görünür: ${visibleDrivers.length}');
+
+              // ─── OSM (Birincil — web'de her zaman OSM) ────────────────────
+              if (kIsWeb || activeMapType == MapType.osm) {
                 return OsmMapWidget(
                   drivers: visibleDrivers,
                   onDriverTap: (driver) {
@@ -63,14 +68,13 @@ class MapScreen extends ConsumerWidget {
             ),
           ),
           
-          // TopBar — görsel katman (dokunma geçirir)
+          // TopBar — sadece sol taraftaki brand badge (dokunma geçirir)
           const Positioned(
             top: 0,
             left: 0,
-            right: 0,
             child: IgnorePointer(
               ignoring: true,
-              child: TopBar(),
+              child: TopBar(showButtons: false),
             ),
           ),
           // TopBar butonları — sağ üst (dokunulabilir, sadece butonları kaplar)
@@ -80,11 +84,12 @@ class MapScreen extends ConsumerWidget {
             child: _TopBarButtons(),
           ),
 
-          // Harita türü değiştirme butonu
-          Positioned(
-            top: 100,
-            right: 12,
-            child: _MapTypeToggleButton(
+          // Harita türü değiştirme butonu (web'de gizle — sadece OSM)
+          if (!kIsWeb)
+            Positioned(
+              top: 100,
+              right: 12,
+              child: _MapTypeToggleButton(
               isOsm: activeMapType == MapType.osm,
               osmAvailable: osmAvailable,
               onToggle: () {
@@ -100,84 +105,7 @@ class MapScreen extends ConsumerWidget {
             ),
           ),
           
-          // DownloadBar
-          Positioned(
-            bottom: 30,
-            left: 16,
-            right: 16,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(15),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'Taksici misin?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        'Hemen indir, kazan!',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                  GestureDetector(
-                    onTap: () async {
-                      final url = 'https://aydindabutaksi.com/indir.apk';
-                      if (await canLaunchUrl(Uri.parse(url))) {
-                        await launchUrl(Uri.parse(url));
-                      }
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 15,
-                        vertical: 8,
-                      ),
-                      child: Row(
-                        children: const [
-                          Icon(Icons.download,
-                              color: Colors.white, size: 16),
-                          SizedBox(width: 5),
-                          Text(
-                            'İNDİR',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+
           
           // Driver Card Popup
           if (selectedDriver != null)
@@ -198,7 +126,7 @@ class MapScreen extends ConsumerWidget {
         markerId: gm.MarkerId(driver.id),
         position: gm.LatLng(driver.lat, driver.lng),
         infoWindow: gm.InfoWindow(
-          title: driver.plate,
+          title: '${driver.plate}${driver.isPremium ? ' ⭐' : ''}',
           snippet: '${driver.district} - ${driver.status}',
         ),
         onTap: () {
@@ -212,16 +140,7 @@ class MapScreen extends ConsumerWidget {
   }
 
   double _getHueForStatus(String status) {
-    switch (status) {
-      case 'available':
-        return gm.BitmapDescriptor.hueGreen;
-      case 'busy':
-        return gm.BitmapDescriptor.hueRed;
-      case 'break':
-        return gm.BitmapDescriptor.hueOrange;
-      default:
-        return gm.BitmapDescriptor.hueYellow;
-    }
+    return gm.BitmapDescriptor.hueYellow;
   }
 }
 

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:taxi/config/app_constants.dart';
 import 'package:taxi/models/app_settings_model.dart';
@@ -21,11 +21,16 @@ class FirebaseService {
 
   
   Future<void> initialize() async {
-    await Firebase.initializeApp();
+    // Firebase zaten main.dart içinde başlatılıyor, burada tekrar başlatmaya gerek yok.
     
-    
-    String? token = await _messaging.getToken();
-    print('FCM Token: $token');
+    try {
+      if (!kIsWeb) {
+        String? token = await _messaging.getToken();
+        debugPrint('FCM Token: $token');
+      }
+    } catch (e) {
+      debugPrint('FCM Token alınamadı: $e');
+    }
   }
 
   
@@ -84,6 +89,22 @@ class FirebaseService {
         .collection(AppConstants.driversCollection)
         .doc(driverId)
         .update({'status': status});
+  }
+
+  /// Sürücünün canlı konum bilgisini günceller (lat, lng).
+  Future<void> updateDriverLocation(String driverId, double lat, double lng) async {
+    await _firestore
+        .collection(AppConstants.driversCollection)
+        .doc(driverId)
+        .update({'lat': lat, 'lng': lng, 'isLiveLocation': true});
+  }
+
+  /// Sürücünün canlı konum takibini kapat (ilçe koordinatına dönecek).
+  Future<void> clearDriverLiveLocation(String driverId) async {
+    await _firestore
+        .collection(AppConstants.driversCollection)
+        .doc(driverId)
+        .update({'isLiveLocation': false});
   }
 
   Future<void> updateDriverField(String driverId, String field, dynamic value) async {

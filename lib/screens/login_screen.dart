@@ -49,7 +49,7 @@ class LoginScreen extends HookConsumerWidget {
     appBar: AppBar(
 
         leading: BackButton(
-          onPressed: () => context.pop(),
+          onPressed: () => context.go('/map'),
           color: AppColors.secondary,
          
         ),
