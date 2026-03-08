@@ -4,10 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:taxi/config/app_colors.dart';
 
 class KvkkScreen extends StatelessWidget {
-  const KvkkScreen({Key? key}) : super(key: key);
+  const KvkkScreen({super.key});
 
   static const String _kvkkAcceptedKey = 'kvkk_accepted';
-
 
   static Future<bool> isAccepted() async {
     final prefs = await SharedPreferences.getInstance();
@@ -30,9 +29,7 @@ class KvkkScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: AppColors.secondary,
-              ),
+              decoration: const BoxDecoration(color: AppColors.secondary),
               child: const Column(
                 children: [
                   Text('🚖', style: TextStyle(fontSize: 40)),
@@ -48,10 +45,7 @@ class KvkkScreen extends StatelessWidget {
                   SizedBox(height: 4),
                   Text(
                     'Kişisel Verilerin İşlenmesi Aydınlatma Metni',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white70,
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.white70),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -105,10 +99,7 @@ class KvkkScreen extends StatelessWidget {
                   ),
                   child: const Text(
                     'OKUDUM, KABUL EDİYORUM',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
               ),
@@ -120,7 +111,8 @@ class KvkkScreen extends StatelessWidget {
   }
 }
 
-const String _kvkkText = '''Aydindabu Taksi Uygulaması Kişisel Verilerin İşlenmesi Aydınlatma Metni (KVKK)
+const String _kvkkText =
+    '''Aydindabu Taksi Uygulaması Kişisel Verilerin İşlenmesi Aydınlatma Metni (KVKK)
 
 Veri Sorumlusu: Aydindabu.com
 
