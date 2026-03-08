@@ -101,7 +101,10 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
             const SizedBox(width: 8),
             const Text(
               'ADMİN',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -195,7 +198,7 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
           if (_editingDriver != null) ...[
             _buildEditDriverForm(),
             const SizedBox(height: 20),
-          ] else ...[  
+          ] else ...[
             _buildAddDriverForm(),
             const SizedBox(height: 20),
           ],
@@ -307,10 +310,15 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                   hint: const Text('İLÇE SEÇ', style: TextStyle(fontSize: 12)),
                   style: const TextStyle(fontSize: 12, color: Colors.black87),
                   items: DistrictCoordinates.sortedDistrictNames
-                      .map((name) => DropdownMenuItem(
-                            value: name,
-                            child: Text(name, style: const TextStyle(fontSize: 12)),
-                          ))
+                      .map(
+                        (name) => DropdownMenuItem(
+                          value: name,
+                          child: Text(
+                            name,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (value) {
                     if (value != null) {
@@ -326,14 +334,18 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
               child: ElevatedButton(
                 onPressed: () {
                   if (plateCtrl.text.isNotEmpty && passCtrl.text.isNotEmpty) {
-                    final coords = DistrictCoordinates.getCoordinatesOrDefault(selectedDistrict);
+                    final coords = DistrictCoordinates.getCoordinatesOrDefault(
+                      selectedDistrict,
+                    );
                     final newDriver = Driver(
                       id: DateTime.now().toString(),
                       plate: plateCtrl.text.trim().toUpperCase(),
                       lat: coords.lat,
                       lng: coords.lng,
                       status: 'available',
-                      taxiStand: standCtrl.text.trim().isEmpty ? 'Merkez' : standCtrl.text.trim(),
+                      taxiStand: standCtrl.text.trim().isEmpty
+                          ? 'Merkez'
+                          : standCtrl.text.trim(),
                       district: selectedDistrict,
                       phone: '',
                       isPremium: _addIsPremium,
@@ -380,10 +392,7 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFEEE)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4),
         ],
       ),
       margin: const EdgeInsets.symmetric(vertical: 6),
@@ -406,7 +415,10 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                     if (driver.isPremium || driver.isVip)
                       Container(
                         margin: const EdgeInsets.only(left: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.premium.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(4),
@@ -507,7 +519,10 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
             ),
             style: const TextStyle(fontSize: 14),
             textCapitalization: TextCapitalization.characters,
@@ -523,7 +538,10 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
             ),
             style: const TextStyle(fontSize: 14),
           ),
@@ -538,7 +556,10 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
             ),
             style: const TextStyle(fontSize: 14),
           ),
@@ -556,10 +577,10 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                 value: _editDistrict,
                 style: const TextStyle(fontSize: 14, color: Colors.black87),
                 items: DistrictCoordinates.sortedDistrictNames
-                    .map((name) => DropdownMenuItem(
-                          value: name,
-                          child: Text(name),
-                        ))
+                    .map(
+                      (name) =>
+                          DropdownMenuItem(value: name, child: Text(name)),
+                    )
                     .toList(),
                 onChanged: (value) {
                   if (value != null) {
@@ -606,7 +627,9 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                 child: ElevatedButton(
                   onPressed: () {
                     if (_editingDriver == null) return;
-                    final coords = DistrictCoordinates.getCoordinatesOrDefault(_editDistrict);
+                    final coords = DistrictCoordinates.getCoordinatesOrDefault(
+                      _editDistrict,
+                    );
                     final updated = _editingDriver!.copyWith(
                       plate: _editPlateCtrl.text.trim().toUpperCase(),
                       password: _editPassCtrl.text.trim(),
@@ -645,7 +668,10 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                 onPressed: () => setState(() => _editingDriver = null),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[300],
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 20,
+                  ),
                 ),
                 child: const Text(
                   'İPTAL',
@@ -665,9 +691,7 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
 
   // REQUESTS TAB
   Widget _buildRequestsTab() {
-    return const Center(
-      child: Text('İstek yok'),
-    );
+    return const Center(child: Text('İstek yok'));
   }
 
   // PACKAGES TAB
@@ -685,17 +709,24 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
         packages.when(
           data: (packagesList) => Column(
             children: packagesList.isEmpty
-                ? [const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text('Henüz paket yok', style: TextStyle(color: Colors.grey)),
-                  )]
+                ? [
+                    const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text(
+                        'Henüz paket yok',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ),
+                  ]
                 : packagesList.map((pkg) {
                     return Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: pkg.isPremium ? AppColors.primary : Colors.grey[300]!,
+                          color: pkg.isPremium
+                              ? AppColors.primary
+                              : Colors.grey[300]!,
                           width: pkg.isPremium ? 2 : 1,
                         ),
                       ),
@@ -709,23 +740,33 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                             children: [
                               Text(
                                 '${pkg.name} ${pkg.isPremium ? '⭐' : ''}',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               Text(
                                 '${pkg.price} TL / ${pkg.duration}',
-                                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
                           GestureDetector(
-                            onTap: () => FirebaseService().deletePackage(pkg.id),
+                            onTap: () =>
+                                FirebaseService().deletePackage(pkg.id),
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.red.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Icon(Icons.delete, size: 16, color: Colors.red),
+                              child: const Icon(
+                                Icons.delete,
+                                size: 16,
+                                color: Colors.red,
+                              ),
                             ),
                           ),
                         ],
@@ -776,7 +817,9 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                         borderSide: BorderSide.none,
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       isDense: true,
                     ),
                     style: const TextStyle(fontSize: 12),
@@ -797,7 +840,9 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                         borderSide: BorderSide.none,
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       isDense: true,
                     ),
                     style: const TextStyle(fontSize: 12),
@@ -818,7 +863,9 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                         borderSide: BorderSide.none,
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       isDense: true,
                     ),
                     style: const TextStyle(fontSize: 12),
@@ -912,13 +959,22 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
   Widget _buildSettingsTab() {
     if (!_settingsLoaded) {
       _settingsLoaded = true;
-      FirebaseService().getSettings().then((settings) {
-        _whatsappCtrl.text = settings.whatsappNumber;
-        _downloadCtrl.text = settings.downloadLink;
-        if (mounted) setState(() {});
-      }).catchError((_) {
-        if (mounted) setState(() {});
-      });
+      FirebaseService()
+          .getSettings()
+          .then((settings) {
+            if (settings.whatsappNumber != null) {
+              _whatsappCtrl.text = settings.whatsappNumber!;
+            }
+
+            if (settings.downloadLink != null) {
+              _downloadCtrl.text = settings.downloadLink!;
+            }
+
+            if (mounted) setState(() {});
+          })
+          .catchError((_) {
+            if (mounted) setState(() {});
+          });
     }
 
     return ListView(
@@ -929,87 +985,102 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
           icon: Icons.chat,
           title: 'WhatsApp Linki',
           controller: _whatsappCtrl,
-              hint: '905XXXXXXXXX',
-              keyboardType: TextInputType.phone,
-              onSave: () {
-                FirebaseService().getSettings().then((current) {
+          hint: '905XXXXXXXXX',
+          keyboardType: TextInputType.phone,
+          onSave: () {
+            FirebaseService()
+                .getSettings()
+                .then((current) {
                   FirebaseService().updateSettings(
                     current.copyWith(whatsappNumber: _whatsappCtrl.text.trim()),
                   );
-                }).catchError((e) { debugPrint('WhatsApp kayıt hatası: $e'); });
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('WhatsApp linki güncellendi ✓'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                }
-              },
-            ),
-            const SizedBox(height: 12),
+                })
+                .catchError((e) {
+                  debugPrint('WhatsApp kayıt hatası: $e');
+                });
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('WhatsApp linki güncellendi ✓'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            }
+          },
+        ),
+        const SizedBox(height: 12),
 
-            // Uygulama İndirme Linki
-            _buildSettingsCard(
-              icon: Icons.download,
-              title: 'Uygulama İndirme Linki',
-              controller: _downloadCtrl,
-              hint: 'https://...',
-              keyboardType: TextInputType.url,
-              onSave: () {
-                FirebaseService().getSettings().then((current) {
+        // Uygulama İndirme Linki
+        _buildSettingsCard(
+          icon: Icons.download,
+          title: 'Uygulama İndirme Linki',
+          controller: _downloadCtrl,
+          hint: 'https://...',
+          keyboardType: TextInputType.url,
+          onSave: () {
+            FirebaseService()
+                .getSettings()
+                .then((current) {
                   FirebaseService().updateSettings(
                     current.copyWith(downloadLink: _downloadCtrl.text.trim()),
                   );
-                }).catchError((e) { debugPrint('İndirme link kayıt hatası: $e'); });
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('İndirme linki güncellendi ✓'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                }
-              },
-            ),
-            const SizedBox(height: 12),
+                })
+                .catchError((e) {
+                  debugPrint('İndirme link kayıt hatası: $e');
+                });
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('İndirme linki güncellendi ✓'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            }
+          },
+        ),
+        const SizedBox(height: 12),
 
-            // Admin Şifresi
-            _buildSettingsCard(
-              icon: Icons.lock,
-              title: 'Admin Şifresi',
-              controller: _passwordCtrl,
-              hint: 'Değiştirmek için yeni şifre yaz',
-              obscureText: true,
-              onSave: () {
-                if (_passwordCtrl.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Şifre boş olamaz'),
-                      backgroundColor: AppColors.error,
-                    ),
-                  );
-                  return;
-                }
-                final newPass = _passwordCtrl.text.trim();
-                FirebaseService().getSettings().then((current) {
+        // Admin Şifresi
+        _buildSettingsCard(
+          icon: Icons.lock,
+          title: 'Admin Şifresi',
+          controller: _passwordCtrl,
+          hint: 'Değiştirmek için yeni şifre yaz',
+          obscureText: true,
+          onSave: () {
+            if (_passwordCtrl.text.trim().isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Şifre boş olamaz'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+              return;
+            }
+            final newPass = _passwordCtrl.text.trim();
+            FirebaseService()
+                .getSettings()
+                .then((current) {
                   FirebaseService().updateSettings(
                     current.copyWith(adminPassword: newPass),
                   );
-                }).catchError((e) { debugPrint('Admin şifre kayıt hatası: $e'); });
-                _passwordCtrl.clear();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Admin şifresi güncellendi ✓'),
-                      backgroundColor: AppColors.success,
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
-        );
+                })
+                .catchError((e) {
+                  debugPrint('Admin şifre kayıt hatası: $e');
+                });
+            _passwordCtrl.clear();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Admin şifresi güncellendi ✓'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            }
+          },
+        ),
+      ],
+    );
   }
 
   Widget _buildSettingsCard({
@@ -1061,7 +1132,9 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                   borderSide: BorderSide.none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 10),
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 isDense: true,
               ),
               style: const TextStyle(fontSize: 13),
@@ -1090,7 +1163,9 @@ class _AdminPanelState extends ConsumerState<AdminPanel> {
                         height: 16,
                         width: 16,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Text(
                         'KAYDET',

@@ -7,11 +7,16 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     
+    <!-- Android 13+ bildirim izni -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Sürücü arka plan konum takibi -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <!-- Remove ads permission -->
     <uses-permission android:name="android.permission.AD_ID" tools:node="remove" />
 
     <application
-        android:label="taxi"
+        android:label="AydınDaBu TAKSİ"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <!-- Google Maps API Key -->

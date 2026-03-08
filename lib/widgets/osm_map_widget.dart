@@ -7,7 +7,7 @@ import 'package:taxi/models/driver_model.dart';
 import 'package:taxi/providers/map_provider.dart';
 
 /// OpenStreetMap tabanlı harita widget'ı.
-/// 
+///
 /// Tile yüklemelerinde ardı ardına hata gelirse [osmAvailableProvider]'ı
 /// false yaparak [activeMapTypeProvider]'ı Google Maps'e döndürür.
 class OsmMapWidget extends ConsumerStatefulWidget {
@@ -75,9 +75,7 @@ class _OsmMapWidgetState extends ConsumerState<OsmMapWidget> {
             ),
 
             // Sürücü Marker'ları
-            MarkerLayer(
-              markers: _buildMarkers(),
-            ),
+            MarkerLayer(markers: _buildMarkers()),
 
             // Atıf (OSM lisans gereği zorunlu)
             _OsmAttribution(),
@@ -119,8 +117,13 @@ class _OsmMapWidgetState extends ConsumerState<OsmMapWidget> {
   }
 
   List<Marker> _buildMarkers() {
-    debugPrint('[OsmMap] Marker oluşturuluyor: ${widget.drivers.length} sürücü');
+    debugPrint(
+      '[OsmMap] Marker oluşturuluyor: ${widget.drivers.length} sürücü',
+    );
     return widget.drivers.map((driver) {
+      debugPrint(
+        '  → ${driver.plate}: ${driver.lat.toStringAsFixed(6)}, ${driver.lng.toStringAsFixed(6)}',
+      );
       const color = Color(0xFFFFC107); // sarı
       return Marker(
         point: ll.LatLng(driver.lat, driver.lng),
@@ -142,7 +145,9 @@ class _OsmMapWidgetState extends ConsumerState<OsmMapWidget> {
                     color: color,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: driver.isPremium ? const Color(0xFFFFD700) : Colors.white,
+                      color: driver.isPremium
+                          ? const Color(0xFFFFD700)
+                          : Colors.white,
                       width: driver.isPremium ? 3 : 2,
                     ),
                     boxShadow: [
@@ -172,7 +177,9 @@ class _OsmMapWidgetState extends ConsumerState<OsmMapWidget> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFF8F00).withValues(alpha: 0.6),
+                            color: const Color(
+                              0xFFFF8F00,
+                            ).withValues(alpha: 0.6),
                             blurRadius: 4,
                           ),
                         ],
@@ -191,8 +198,6 @@ class _OsmMapWidgetState extends ConsumerState<OsmMapWidget> {
       );
     }).toList();
   }
-
-
 }
 
 /// Zoom +/- butonu.

@@ -72,81 +72,81 @@ class TopBar extends ConsumerWidget {
             ),
             // Action Buttons
             if (showButtons)
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => context.push('/login'),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 3,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Text('👤', style: TextStyle(fontSize: 14)),
-                        SizedBox(width: 4),
-                        Text(
-                          'GİRİŞ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.black,
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.push('/login'),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 3,
+                            offset: const Offset(0, 2),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text('👤', style: TextStyle(fontSize: 14)),
+                          SizedBox(width: 4),
+                          Text(
+                            'GİRİŞ',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => _showDriversList(context),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 3,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Text('📋', style: TextStyle(fontSize: 14)),
-                        SizedBox(width: 4),
-                        Text(
-                          'LİSTE',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.black,
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => _showDriversList(context),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 3,
+                            offset: const Offset(0, 2),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text('📋', style: TextStyle(fontSize: 14)),
+                          SizedBox(width: 4),
+                          Text(
+                            'LİSTE',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
           ],
         ),
       ),
@@ -212,9 +212,7 @@ class DriverListModal extends ConsumerWidget {
               Expanded(
                 child: driversAsync.when(
                   loading: () => const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
-                    ),
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   ),
                   error: (error, _) => Center(
                     child: Padding(
@@ -227,11 +225,14 @@ class DriverListModal extends ConsumerWidget {
                     ),
                   ),
                   data: (drivers) {
-                    // ADMIN plakalıyı ve pending durumundakileri filtrele
+                    // ADMIN, suspended ve pending durumundakileri filtrele
                     final activeDrivers = drivers
-                        .where((d) =>
-                            d.plate.toUpperCase() != 'ADMIN' &&
-                            d.status != 'pending')
+                        .where(
+                          (d) =>
+                              d.plate.toUpperCase() != 'ADMIN' &&
+                              d.status != 'pending' &&
+                              d.status != 'suspended',
+                        )
                         .toList();
 
                     if (activeDrivers.isEmpty) {
@@ -239,8 +240,11 @@ class DriverListModal extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.local_taxi,
-                                size: 48, color: Colors.grey[300]),
+                            Icon(
+                              Icons.local_taxi,
+                              size: 48,
+                              color: Colors.grey[300],
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               'Henüz kayıtlı taksi yok',
@@ -321,10 +325,7 @@ class DriverListModal extends ConsumerWidget {
           children: [
             Text(
               driver.plate,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
             if (driver.isPremium)
               const Padding(
@@ -337,8 +338,8 @@ class DriverListModal extends ConsumerWidget {
           driver.taxiStand.isNotEmpty
               ? '${driver.taxiStand}${driver.district.isNotEmpty ? ' • ${driver.district}' : ''}'
               : driver.district.isNotEmpty
-                  ? driver.district
-                  : 'Konum bilgisi yok',
+              ? driver.district
+              : 'Konum bilgisi yok',
           style: TextStyle(color: Colors.grey[600], fontSize: 12),
         ),
         trailing: Container(

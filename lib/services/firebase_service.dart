@@ -19,13 +19,14 @@ class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
-  
   Future<void> initialize() async {
     // Firebase zaten main.dart içinde başlatılıyor, burada tekrar başlatmaya gerek yok.
-    
     try {
       if (!kIsWeb) {
-        String? token = await _messaging.getToken();
+        String? token = await _messaging.getToken().timeout(
+          const Duration(seconds: 8),
+          onTimeout: () => null,
+        );
         debugPrint('FCM Token: $token');
       }
     } catch (e) {
@@ -33,16 +34,15 @@ class FirebaseService {
     }
   }
 
-  
   Stream<List<Driver>> getDriversStream() {
     return _firestore
         .collection(AppConstants.driversCollection)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => Driver.fromJson(doc.data(), doc.id))
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => Driver.fromJson(doc.data(), doc.id))
+              .toList();
+        });
   }
 
   Future<Driver?> getDriver(String driverId) async {
@@ -50,7 +50,7 @@ class FirebaseService {
         .collection(AppConstants.driversCollection)
         .doc(driverId)
         .get();
-    
+
     if (doc.exists) {
       return Driver.fromJson(doc.data()!, doc.id);
     }
@@ -63,7 +63,7 @@ class FirebaseService {
         .where('plate', isEqualTo: plate)
         .limit(1)
         .get();
-    
+
     if (query.docs.isNotEmpty) {
       return Driver.fromJson(query.docs.first.data(), query.docs.first.id);
     }
@@ -92,7 +92,11 @@ class FirebaseService {
   }
 
   /// Sürücünün canlı konum bilgisini günceller (lat, lng).
-  Future<void> updateDriverLocation(String driverId, double lat, double lng) async {
+  Future<void> updateDriverLocation(
+    String driverId,
+    double lat,
+    double lng,
+  ) async {
     await _firestore
         .collection(AppConstants.driversCollection)
         .doc(driverId)
@@ -107,7 +111,11 @@ class FirebaseService {
         .update({'isLiveLocation': false});
   }
 
-  Future<void> updateDriverField(String driverId, String field, dynamic value) async {
+  Future<void> updateDriverField(
+    String driverId,
+    String field,
+    dynamic value,
+  ) async {
     await _firestore
         .collection(AppConstants.driversCollection)
         .doc(driverId)
@@ -121,16 +129,15 @@ class FirebaseService {
         .delete();
   }
 
-  
   Stream<List<TaxiRequest>> getRequestsStream() {
     return _firestore
         .collection(AppConstants.requestsCollection)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => TaxiRequest.fromJson(doc.data(), doc.id))
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => TaxiRequest.fromJson(doc.data(), doc.id))
+              .toList();
+        });
   }
 
   Future<void> addRequest(TaxiRequest request) async {
@@ -146,16 +153,15 @@ class FirebaseService {
         .update({'status': status});
   }
 
-  
   Stream<List<TaxiPackage>> getPackagesStream() {
     return _firestore
         .collection(AppConstants.packagesCollection)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => TaxiPackage.fromJson(doc.data(), doc.id))
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => TaxiPackage.fromJson(doc.data(), doc.id))
+              .toList();
+        });
   }
 
   Future<void> addPackage(TaxiPackage package) async {
@@ -178,20 +184,38 @@ class FirebaseService {
         .delete();
   }
 
-  
   Future<AppSettings> getSettings() async {
-    final doc = await _firestore
-        .collection(AppConstants.settingsCollection)
-        .doc(AppConstants.settingsDocument)
-        .get();
-    
-    if (doc.exists) {
-      return AppSettings.fromJson(doc.data()!);
+    // 1) Önce Firestore'un lokal cache'ini dene (offline çalışır)
+    try {
+      final cached = await _firestore
+          .collection(AppConstants.settingsCollection)
+          .doc(AppConstants.settingsDocument)
+          .get(const GetOptions(source: Source.cache));
+      if (cached.exists && cached.data() != null) {
+        debugPrint('Settings loaded from local cache');
+        return AppSettings.fromJson(cached.data()!);
+      }
+    } catch (_) {}
+
+    // 2) Cache yoksa server'dan dene (8 saniyelik timeout)
+    try {
+      final doc = await _firestore
+          .collection(AppConstants.settingsCollection)
+          .doc(AppConstants.settingsDocument)
+          .get(const GetOptions(source: Source.server))
+          .timeout(const Duration(seconds: 8));
+      if (doc.exists && doc.data() != null) {
+        debugPrint('Settings loaded from server');
+        return AppSettings.fromJson(doc.data()!);
+      }
+    } catch (e) {
+      debugPrint('Settings server fetch failed: $e');
     }
-    
-    
+
+    // 3) Her iki kaynak da başarısız → varsayılan döndür (asla exception atmaz)
+    debugPrint('Settings unavailable, using defaults');
     return AppSettings(
-      adminPassword: AppConstants.adminDefaultPassword,
+      adminPassword: '123456', // fromJson ile tutarlı varsayılan
       whatsappNumber: AppConstants.defaultWhatsappNumber,
       downloadLink: AppConstants.defaultDownloadLink,
     );
@@ -203,15 +227,15 @@ class FirebaseService {
         .doc(AppConstants.settingsDocument)
         .snapshots()
         .map((snapshot) {
-      if (snapshot.exists) {
-        return AppSettings.fromJson(snapshot.data()!);
-      }
-      return AppSettings(
-        adminPassword: AppConstants.adminDefaultPassword,
-        whatsappNumber: AppConstants.defaultWhatsappNumber,
-        downloadLink: AppConstants.defaultDownloadLink,
-      );
-    });
+          if (snapshot.exists) {
+            return AppSettings.fromJson(snapshot.data()!);
+          }
+          return AppSettings(
+            adminPassword: '',
+            whatsappNumber: AppConstants.defaultWhatsappNumber,
+            downloadLink: AppConstants.defaultDownloadLink,
+          );
+        });
   }
 
   Future<void> updateSettings(AppSettings settings) async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
@@ -22,10 +24,7 @@ class SplashScreen extends HookWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              '🚖',
-              style: TextStyle(fontSize: 80),
-            ),
+            const Text('🚖', style: TextStyle(fontSize: 80)),
             const SizedBox(height: 20),
             const Text(
               'AydınDaBu',
@@ -38,10 +37,7 @@ class SplashScreen extends HookWidget {
             const SizedBox(height: 8),
             const Text(
               'TAKSİ',
-              style: TextStyle(
-                fontSize: 24,
-                color: AppColors.secondary,
-              ),
+              style: TextStyle(fontSize: 24, color: AppColors.secondary),
             ),
             const SizedBox(height: 40),
             const CircularProgressIndicator(
@@ -54,18 +50,14 @@ class SplashScreen extends HookWidget {
   }
 
   Future<void> _initializeApp(BuildContext context) async {
-    try {
-      
+    Future<void> coreInit() async {
       final firebaseService = FirebaseService();
       await firebaseService.initialize();
 
-      
-      final notificationService = NotificationService();
-      await notificationService.initialize();
+      // Bildirim izinleri & token navigasyonu bloklamamalı
+      unawaited(NotificationService().initialize());
 
-      // KVKK onayı kontrol et
       final kvkkAccepted = await KvkkScreen.isAccepted();
-      
       if (context.mounted) {
         if (kvkkAccepted) {
           context.go('/map');
@@ -73,10 +65,14 @@ class SplashScreen extends HookWidget {
           context.go('/kvkk');
         }
       }
+    }
+
+    try {
+      // 12 saniyet içinde tamamlanmazsa fallback ile ilerle
+      await coreInit().timeout(const Duration(seconds: 12));
     } catch (e) {
-      debugPrint('Initialization error: $e');
+      debugPrint('Initialization error/timeout: $e');
       if (context.mounted) {
-        // KVKK onayı kontrol et (hata durumunda da)
         final kvkkAccepted = await KvkkScreen.isAccepted();
         if (context.mounted) {
           if (kvkkAccepted) {

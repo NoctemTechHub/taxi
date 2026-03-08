@@ -58,7 +58,7 @@ class DownloadBar extends ConsumerWidget {
             settings.when(
               data: (settingsData) => ElevatedButton(
                 onPressed: () {
-                  _downloadApp(settingsData.downloadLink);
+                  _downloadApp(settingsData.downloadLink ?? '');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.secondary,
@@ -85,10 +85,7 @@ class DownloadBar extends ConsumerWidget {
   Future<void> _downloadApp(String url) async {
     try {
       if (await canLaunchUrl(Uri.parse(url))) {
-        await launchUrl(
-          Uri.parse(url),
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
       }
     } catch (e) {
       debugPrint('Error launching URL: $e');

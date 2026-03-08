@@ -20,37 +20,52 @@ class AuthService {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  
   Future<AppUser?> login(String plate, String password) async {
     try {
       final trimmedPlate = plate.trim();
       final trimmedPassword = password.trim();
 
-      debugPrint('Login attempt: plate="$trimmedPlate"');
+      debugPrint('Login attempt: plate=$trimmedPlate');
+      // Avoid logging raw passwords
+      debugPrint('Login attempt: password=*** (hidden)');
 
       // Admin girişi
       if (trimmedPlate.toUpperCase() == AppConstants.adminPlate) {
         debugPrint('Admin login detected');
 
-        // Default şifre her zaman kabul edilsin
-        if (trimmedPassword == AppConstants.adminDefaultPassword) {
-          debugPrint('Admin login with default password');
-          final user = AppUser.admin('admin');
-          await _saveUserLocal(user);
-          return user;
-        }
-
-        // Firestore'daki özel şifreyi kontrol et
-        try {
-          final settings = await _firebaseService.getSettings();
-          if (trimmedPassword == settings.adminPassword) {
-            debugPrint('Admin login with Firestore password');
+        // 1) Önce local cache'den kontrol et
+        final cachedAdminPw = _prefs.getString('cached_admin_password');
+        if (cachedAdminPw != null && cachedAdminPw.isNotEmpty) {
+          if (trimmedPassword == cachedAdminPw) {
+            debugPrint('Admin login with cached password');
             final user = AppUser.admin('admin');
             await _saveUserLocal(user);
             return user;
           }
-        } catch (e) {
-          debugPrint('Ayarlar alınamadı: $e');
+        }
+
+        // 2) Firestore'dan şifreyi getir (getSettings artık asla exception atmaz)
+        final settings = await _firebaseService.getSettings();
+        final fetchedPw = settings.adminPassword ?? '';
+
+        if (fetchedPw.isEmpty) {
+          // Firestore'da settings/config dökümanı yok veya ulaşılamıyor
+          // Cache de yok → giriş yapılamaz, kullanıcıya bilgi ver
+          debugPrint(
+            'Admin login failed: settings/config Firestore dökümanı bulunamadı. '
+            'Firebase Console → Firestore → settings/config dökümanını oluştur ve adminPassword alanını ekle.',
+          );
+          return null;
+        }
+
+        // Başarılı ise SharedPreferences cache'e yaz (offline için)
+        await _prefs.setString('cached_admin_password', fetchedPw);
+
+        if (trimmedPassword == fetchedPw) {
+          debugPrint('Admin login success with Firestore password');
+          final user = AppUser.admin('admin');
+          await _saveUserLocal(user);
+          return user;
         }
 
         debugPrint('Admin password mismatch');
@@ -58,8 +73,9 @@ class AuthService {
       }
 
       // Şoför girişi
-      debugPrint('Driver login: searching plate "$trimmedPlate"');
-      final driver = await _firebaseService.getDriverByPlate(trimmedPlate);
+      final uppercasedPlate = trimmedPlate.toUpperCase();
+      debugPrint('Driver login: searching plate=$uppercasedPlate');
+      final driver = await _firebaseService.getDriverByPlate(uppercasedPlate);
       debugPrint('Driver found: ${driver != null}');
 
       if (driver != null && driver.password == trimmedPassword) {
@@ -77,7 +93,9 @@ class AuthService {
         return user;
       }
 
-      debugPrint('Login failed: driver=${driver != null}, password match=${driver?.password == trimmedPassword}');
+      debugPrint(
+        'Login failed: driver=${driver != null}, password match=${driver?.password == trimmedPassword}',
+      );
       return null;
     } catch (e) {
       debugPrint('Login error: $e');
@@ -85,7 +103,6 @@ class AuthService {
     }
   }
 
-  
   Future<void> logout() async {
     await _prefs.remove('user_id');
     await _prefs.remove('user_role');
@@ -93,7 +110,6 @@ class AuthService {
     await _prefs.remove('user_phone');
   }
 
-  
   AppUser? getCurrentUser() {
     final userId = _prefs.getString('user_id');
     final role = _prefs.getString('user_role');
@@ -114,12 +130,10 @@ class AuthService {
     }
   }
 
-  
   bool isLoggedIn() {
     return getCurrentUser() != null;
   }
 
-  
   Future<void> _saveUserLocal(AppUser user) async {
     await _prefs.setString('user_id', user.id);
     await _prefs.setString('user_role', user.role);

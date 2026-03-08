@@ -4,24 +4,24 @@ class AppConstants {
   static const double aydinLongitude = 27.8458;
   static const double latitudeDelta = 0.04;
   static const double longitudeDelta = 0.04;
-  
+
   // Initial Map Zoom
   static const double initialZoom = 13.0;
-  
-  // Admin Credentials (from example.md)
+
+  // Admin Credentials
   static const String adminPlate = 'ADMIN';
-  static const String adminDefaultPassword = '123456';
-  
+
   // WhatsApp
   static const String defaultWhatsappNumber = '905413002836';
-  
+
   // Default Download Link
-  static const String defaultDownloadLink = 'https://aydindabutaksi.com/indir.apk';
-  
+  static const String defaultDownloadLink =
+      'https://aydindabutaksi.com/indir.apk';
+
   // Firestore Collections
   static const String driversCollection = 'drivers';
   static const String requestsCollection = 'requests';
   static const String packagesCollection = 'packages';
-  static const String settingsCollection = 'admin_settings';
+  static const String settingsCollection = 'settings';
   static const String settingsDocument = 'config';
 }

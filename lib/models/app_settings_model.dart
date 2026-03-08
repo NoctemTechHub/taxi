@@ -1,19 +1,16 @@
 class AppSettings {
-  final String adminPassword;
-  final String whatsappNumber;
-  final String downloadLink;
+  final String? adminPassword;
+  final String? whatsappNumber;
+  final String? downloadLink;
 
-  AppSettings({
-    required this.adminPassword,
-    required this.whatsappNumber,
-    required this.downloadLink,
-  });
+  AppSettings({this.adminPassword, this.whatsappNumber, this.downloadLink});
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
     return AppSettings(
       adminPassword: json['adminPassword'] ?? '123456',
       whatsappNumber: json['whatsappNumber'] ?? '905555555555',
-      downloadLink: json['downloadLink'] ?? 'https://aydindabutaksi.com/indir.apk',
+      downloadLink:
+          json['downloadLink'] ?? 'https://aydindabutaksi.com/indir.apk',
     );
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
@@ -13,39 +15,46 @@ class NotificationService {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
   Future<void> initialize() async {
-    
-    await _messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
+    try {
+      await _messaging
+          .requestPermission(
+            alert: true,
+            announcement: false,
+            badge: true,
+            carPlay: false,
+            criticalAlert: false,
+            provisional: false,
+            sound: true,
+          )
+          .timeout(const Duration(seconds: 10));
+    } catch (e) {
+      debugPrint('Bildirim izni alınamadı: $e');
+    }
 
-    
-    String? token = await _messaging.getToken();
-    debugPrint('FCM Token: $token');
+    try {
+      String? token = await _messaging.getToken().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => null,
+      );
+      debugPrint('FCM Token: $token');
+    } catch (e) {
+      debugPrint('FCM Token alınamadı: $e');
+    }
 
-    
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('Foreground message: ${message.notification?.title}');
-      
     });
 
-    
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('Notification clicked: ${message.notification?.title}');
-      
     });
   }
 
   static Future<void> _firebaseMessagingBackgroundHandler(
-      RemoteMessage message) async {
+    RemoteMessage message,
+  ) async {
     debugPrint('Background message received: ${message.notification?.title}');
   }
 }

@@ -7,11 +7,9 @@ import 'package:taxi/config/app_colors.dart';
 import 'package:taxi/config/app_constants.dart';
 import 'package:taxi/providers/driver_provider.dart';
 import 'package:taxi/providers/map_provider.dart';
-import 'package:taxi/providers/settings_provider.dart';
 import 'package:taxi/widgets/modals/taxi_detail_modal.dart';
 import 'package:taxi/widgets/osm_map_widget.dart';
 import 'package:taxi/widgets/top_bar.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class MapScreen extends ConsumerWidget {
   const MapScreen({super.key});
@@ -28,12 +26,18 @@ class MapScreen extends ConsumerWidget {
         children: [
           drivers.when(
             data: (driversList) {
-              // ADMIN hariç tüm sürücüleri haritada göster
+              // ADMIN ve suspended hariç tüm sürücüleri haritada göster
               final visibleDrivers = driversList
-                  .where((d) => d.plate.toUpperCase() != 'ADMIN')
+                  .where(
+                    (d) =>
+                        d.plate.toUpperCase() != 'ADMIN' &&
+                        d.status != 'suspended',
+                  )
                   .toList();
 
-              debugPrint('[MapScreen] Toplam: ${driversList.length}, Görünür: ${visibleDrivers.length}');
+              debugPrint(
+                '[MapScreen] Toplam: ${driversList.length}, Görünür: ${visibleDrivers.length}',
+              );
 
               // ─── OSM (Birincil — web'de her zaman OSM) ────────────────────
               if (kIsWeb || activeMapType == MapType.osm) {
@@ -60,14 +64,10 @@ class MapScreen extends ConsumerWidget {
                 zoomControlsEnabled: true,
               );
             },
-            loading: () => const Center(
-              child: CircularProgressIndicator(),
-            ),
-            error: (error, stackTrace) => Center(
-              child: Text('Hata: $error'),
-            ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stackTrace) => Center(child: Text('Hata: $error')),
           ),
-          
+
           // TopBar — sadece sol taraftaki brand badge (dokunma geçirir)
           const Positioned(
             top: 0,
@@ -78,11 +78,7 @@ class MapScreen extends ConsumerWidget {
             ),
           ),
           // TopBar butonları — sağ üst (dokunulabilir, sadece butonları kaplar)
-          const Positioned(
-            top: 0,
-            right: 0,
-            child: _TopBarButtons(),
-          ),
+          const Positioned(top: 0, right: 0, child: _TopBarButtons()),
 
           // Harita türü değiştirme butonu (web'de gizle — sadece OSM)
           if (!kIsWeb)
@@ -90,23 +86,22 @@ class MapScreen extends ConsumerWidget {
               top: 100,
               right: 12,
               child: _MapTypeToggleButton(
-              isOsm: activeMapType == MapType.osm,
-              osmAvailable: osmAvailable,
-              onToggle: () {
-                if (activeMapType == MapType.osm) {
-                  ref.read(activeMapTypeProvider.notifier).state =
-                      MapType.google;
-                } else {
-                  // OSM'yi tekrar dene
-                  ref.read(osmAvailableProvider.notifier).state = true;
-                  ref.read(activeMapTypeProvider.notifier).state = MapType.osm;
-                }
-              },
+                isOsm: activeMapType == MapType.osm,
+                osmAvailable: osmAvailable,
+                onToggle: () {
+                  if (activeMapType == MapType.osm) {
+                    ref.read(activeMapTypeProvider.notifier).state =
+                        MapType.google;
+                  } else {
+                    // OSM'yi tekrar dene
+                    ref.read(osmAvailableProvider.notifier).state = true;
+                    ref.read(activeMapTypeProvider.notifier).state =
+                        MapType.osm;
+                  }
+                },
+              ),
             ),
-          ),
-          
 
-          
           // Driver Card Popup
           if (selectedDriver != null)
             TaxiDetailModal(
@@ -171,7 +166,10 @@ class _TopBarButtons extends StatelessWidget {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -204,7 +202,10 @@ class _TopBarButtons extends StatelessWidget {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
